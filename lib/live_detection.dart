@@ -52,7 +52,7 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
 
   // Fungsi untuk mengirim data ke API dengan format JSON khusus
   Future<void> sendDataToApi(Position? pos, Map<int, int> counts) async {
-    // ⚠️ GANTI URL INI dengan alamat API server Anda yang asli
+    // GANTI URL INI dengan alamat API server yang asli
     final url = Uri.parse('http://10.160.157.180:3000/api/sawit'); 
 
     try {
@@ -116,7 +116,6 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
               showNativeUI: true,
               controller: controller,
               onResult: (dynamic results) {
-                // Hanya update hasil deteksi, tidak hitung FPS manual
                 List<dynamic> parsed = [];
                 try {
                   if (results is List) {
@@ -163,11 +162,7 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
                     }
                   }
                   classCounts = counts;
-                  // ...existing code...
                 });
-              },
-              onPerformanceMetrics: (metrics) {
-                // ...existing code...
               },
               onStreamingData: (stream) async {
                 // stream contains detections, fps, processingTimeMs, originalImage etc.
