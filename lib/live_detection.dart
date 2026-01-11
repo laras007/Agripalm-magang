@@ -24,8 +24,7 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
   final GlobalKey _repaintKey = GlobalKey();
   late YOLOStreamingConfig _streamingConfig;
   List<dynamic> currentResults = [];
-  double fps = 0.0;
-  double processingTimeMs = 0.0;
+  // ...existing code...
   Uint8List? _lastFrameBytes;
   Map<int, int> classCounts = {};
   final List<String> classLabels = [
@@ -37,10 +36,7 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
     'Terlalu masak', // 5
   ];
   // (removed unused _lastResultTimestampMs)
-  // timestamps (ms) of recent onResult callbacks for local FPS calculation
-  final List<int> _frameTimestampsMs = [];
-  // smoothing factor for displayed FPS (0..1)
-  final double _fpsSmoothing = 0.2;
+  // FPS dan waktu proses hanya dari plugin
 
   @override
   void initState() {
@@ -120,32 +116,7 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
               showNativeUI: true,
               controller: controller,
               onResult: (dynamic results) {
-                if (kDebugMode) {
-                  try {
-                    print(
-                      'onResult called - runtimeType=${results.runtimeType}',
-                    );
-                    if (results is List) {
-                      print('onResult list length=${results.length}');
-                      if (results.isNotEmpty)
-                        print('onResult[0]=${results[0]}');
-                    } else if (results is Map) {
-                      print('onResult map keys=${results.keys}');
-                    } else {
-                      print('onResult value=$results');
-                    }
-                  } catch (e) {
-                    print('onResult debug print failed: $e');
-                  }
-                }
-                // compute local FPS using sliding window of onResult timestamps
-                final int nowMs = DateTime.now().millisecondsSinceEpoch;
-                _frameTimestampsMs.add(nowMs);
-                // remove timestamps older than 1 second
-                _frameTimestampsMs.removeWhere((t) => t < nowMs - 1000);
-                final double instantFps = _frameTimestampsMs.length.toDouble();
-
-                // normalize results to a List<dynamic> so we can count them reliably
+                // Hanya update hasil deteksi, tidak hitung FPS manual
                 List<dynamic> parsed = [];
                 try {
                   if (results is List) {
@@ -161,31 +132,10 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
                   } else if (results is Iterable) {
                     parsed = List<dynamic>.from(results);
                   } else {
-                    // single result -> wrap
                     parsed = [results];
                   }
                 } catch (e) {
                   parsed = [results];
-                }
-
-                if (kDebugMode) {
-                  try {
-                    print('parsed results length=${parsed.length}');
-                    for (var i = 0; i < parsed.length && i < 3; i++) {
-                      final e = parsed[i];
-                      if (e is YOLOResult) {
-                        print(
-                          'parsed[$i] class=${e.className} conf=${e.confidence}',
-                        );
-                      } else if (e is Map) {
-                        print('parsed[$i] map keys=${e.keys}');
-                      } else {
-                        print('parsed[$i] value=$e');
-                      }
-                    }
-                  } catch (e) {
-                    print('parsed debug failed: $e');
-                  }
                 }
 
                 if (!mounted) return;
@@ -208,36 +158,16 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
                         idx = null;
                       }
                     }
-
                     if (idx != null) {
                       counts[idx] = (counts[idx] ?? 0) + 1;
                     }
                   }
                   classCounts = counts;
-                  // apply simple exponential smoothing so FPS display is stable
-                  if (instantFps > 0) {
-                    fps =
-                        (fps * (1 - _fpsSmoothing)) +
-                        (instantFps * _fpsSmoothing);
-                  }
+                  // ...existing code...
                 });
               },
               onPerformanceMetrics: (metrics) {
-                // store processing time and only accept plugin FPS when > 0
-                if (!mounted) return;
-                setState(() {
-                  processingTimeMs = metrics.processingTimeMs;
-                  if (metrics.fps > 0) {
-                    fps = metrics.fps;
-                  }
-                });
-                // keep console logs for debugging (use debugPrint to satisfy lints)
-                if (kDebugMode) {
-                  print('FPS: ${metrics.fps.toStringAsFixed(1)}');
-                  print(
-                    'Processing time: ${metrics.processingTimeMs.toStringAsFixed(1)}ms',
-                  );
-                }
+                // ...existing code...
               },
               onStreamingData: (stream) async {
                 // stream contains detections, fps, processingTimeMs, originalImage etc.
@@ -301,11 +231,7 @@ class _CameraDetectionScreenState extends State<CameraDetectionScreen> {
                     'Objects: ${currentResults.length}',
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'FPS: ${fps.toStringAsFixed(1)}',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
+                  // ...existing code...
                   SizedBox(height: 8),
                   // class counts
                   Column(
